@@ -1,8 +1,10 @@
 "use client";
 import { Radio } from "@/components/radio";
 import { StationList } from "@/components/stationList";
-import { Station } from "radio-browser-api";
+import { RadioBrowserApi, Station } from "radio-browser-api";
 import { useEffect, useState } from "react";
+
+const api = new RadioBrowserApi("radio-browser-limoeiro");
 
 export default function StationsPage() {
   const [stations, setStations] = useState<Station[]>([]);
@@ -46,12 +48,17 @@ export default function StationsPage() {
     setLoading(true);
 
     try {
-      const res = await fetch(`/api/stations?offset=${offset}`);
+      const stations = await api.searchStations({
+        countryCode: "BR",
+        language: "portuguese",
+        order: "votes",
+        reverse: true,
+        offset,
+        limit: 10,
+        removeDuplicates: true,
+      });
 
-      if (!res.ok) throw new Error("Falha ao buscar estações");
-
-      const data = await res.json();
-      setStations((prev) => [...prev, ...data]);
+      setStations((prev) => [...prev, ...stations]);
       setOffset(offset + 10);
     } catch (error) {
       console.error("Erro ao buscar estações:", error);
