@@ -14,11 +14,15 @@ export async function GET(req: Request) {
       order: "votes",
       reverse: true,
       offset,
-      limit: 10,
+      limit: 40,
       removeDuplicates: true,
     });
 
-    return NextResponse.json(stations, { status: 200 });
+    const stationsSecured = stations.filter((station) =>
+      station.urlResolved.includes("https://")
+    );
+
+    return NextResponse.json(stationsSecured, { status: 200 });
   } catch (error: any) {
     return NextResponse.json(
       { message: "Erro ao buscar estações.", error: error.message },
