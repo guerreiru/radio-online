@@ -39,12 +39,23 @@ export default function StationsPage() {
   }, []);
 
   const fetchStations = async (newOffset: number) => {
+    if (loading) return;
+
     setLoading(true);
-    const res = await fetch(`/api/stations?offset=${newOffset}`);
-    const data = await res.json();
-    setStations((prev) => [...prev, ...data]);
-    setOffset(newOffset + 10);
-    setLoading(false);
+
+    try {
+      const res = await fetch(`/api/stations?offset=${newOffset}`);
+
+      if (!res.ok) throw new Error("Falha ao buscar estações");
+
+      const data = await res.json();
+      setStations((prev) => [...prev, ...data]);
+      setOffset(newOffset + 10);
+    } catch (error) {
+      console.error("Erro ao buscar estações:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
