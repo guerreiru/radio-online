@@ -15,6 +15,7 @@ export default function StationsPage() {
   };
 
   const handleNext = () => {
+    if (stations.length === 0) return;
     if (currentStation) {
       const index = stations.findIndex((s) => s.id === currentStation.id);
       setCurrentStation(stations[(index + 1) % stations.length]);
@@ -24,33 +25,40 @@ export default function StationsPage() {
   };
 
   const handlePrevious = () => {
+    if (stations.length === 0) return;
     if (currentStation) {
       const index = stations.findIndex((s) => s.id === currentStation.id);
       setCurrentStation(
         stations[(index - 1 + stations.length) % stations.length]
       );
     } else {
-      setCurrentStation(stations[1]);
+      setCurrentStation(stations[0]);
     }
   };
 
   useEffect(() => {
-    fetchStations(offset);
+    fetchStations();
   }, []);
 
-  const fetchStations = async (newOffset: number) => {
+  const fetchStations = async () => {
     if (loading) return;
 
     setLoading(true);
-
     try {
-      const res = await fetch(`/api/stations?offset=${newOffset}`);
-
+      const res = await fetch(`/api/stations?offset=${offset}`);
       if (!res.ok) throw new Error("Falha ao buscar estações");
 
-      const data = await res.json();
-      setStations((prev) => [...prev, ...data]);
-      setOffset(newOffset + 10);
+      const data: Station[] = await res.json();
+
+      setStations((prev) => {
+        const newStations = data.filter(
+          (station) => !prev.some((s) => s.id === station.id)
+        );
+        return [...prev, ...newStations];
+      });
+
+      setOffset((prevOffset) => prevOffset + 10);
+      setCurrentStation(stations[0]);
     } catch (error) {
       console.error("Erro ao buscar estações:", error);
     } finally {
@@ -74,7 +82,7 @@ export default function StationsPage() {
         <StationList
           stations={stations}
           onSelectStation={handlePlay}
-          currentStation={currentStation}
+          currentStation={currentStation || stations[0]}
         />
       </div>
 
@@ -83,7 +91,7 @@ export default function StationsPage() {
       {!loading && stations.length > 0 && (
         <div className="flex justify-center my-4">
           <button
-            onClick={() => fetchStations(offset)}
+            onClick={fetchStations}
             disabled={loading}
             className="p-2 bg-blue-500 text-white rounded"
           >
